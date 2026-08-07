@@ -1,0 +1,799 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Who Wants to Be a Millionaire - HBI Ultimate Edition</title>
+    <style>
+        :root {
+            --bg-dark: #020212;
+            --panel-bg: rgba(11, 12, 42, 0.85);
+            --gold: #ffd700;
+            --gold-glow: rgba(255, 215, 0, 0.6);
+            --blue-glow: #00d2ff;
+            --orange: #ff6600;
+            --correct-green: #00e676;
+            --wrong-red: #ff1744;
+            --text-white: #ffffff;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Trebuchet MS', 'Segoe UI', sans-serif;
+        }
+
+        body {
+            background: #020212;
+            color: var(--text-white);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: space-between;
+            padding: 15px;
+            overflow-x: hidden;
+            position: relative;
+        }
+
+        /* Dynamic Animated Studio Spotlights */
+        .studio-lights {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            overflow: hidden;
+            z-index: 0;
+        }
+
+        .spotlight {
+            position: absolute;
+            width: 300px;
+            height: 1000px;
+            background: linear-gradient(180deg, rgba(0, 210, 255, 0.15) 0%, rgba(0,0,0,0) 80%);
+            transform-origin: top center;
+            animation: sweep 8s infinite alternate ease-in-out;
+        }
+
+        .spotlight.left {
+            top: -200px;
+            left: 15%;
+            transform: rotate(-30deg);
+        }
+
+        .spotlight.right {
+            top: -200px;
+            right: 15%;
+            animation-delay: -4s;
+            transform: rotate(30deg);
+        }
+
+        @keyframes sweep {
+            0% { transform: rotate(-35deg); }
+            100% { transform: rotate(35deg); }
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 10px;
+            z-index: 10;
+        }
+
+        h1 {
+            color: var(--gold);
+            font-size: 2.2rem;
+            text-shadow: 0 0 20px var(--gold-glow), 0 0 30px var(--gold);
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            animation: pulseGlow 2s infinite alternate;
+        }
+
+        @keyframes pulseGlow {
+            0% { text-shadow: 0 0 15px var(--gold-glow); }
+            100% { text-shadow: 0 0 35px var(--gold-glow), 0 0 50px var(--gold); }
+        }
+
+        .main-stage {
+            display: flex;
+            width: 100%;
+            max-width: 1150px;
+            gap: 20px;
+            flex: 1;
+            align-items: stretch;
+            z-index: 10;
+        }
+
+        /* Left Side Game Stage */
+        .game-area {
+            flex: 3;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            gap: 15px;
+        }
+
+        /* Lifeline Controls */
+        .lifelines {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+        }
+
+        .lifeline-btn {
+            background: linear-gradient(145deg, #101942, #070a1e);
+            border: 2px solid var(--gold);
+            color: var(--gold);
+            width: 75px;
+            height: 55px;
+            border-radius: 50%;
+            font-size: 0.9rem;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 0 15px rgba(255, 215, 0, 0.25);
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+        }
+
+        .lifeline-btn:hover:not(:disabled) {
+            transform: scale(1.15) translateY(-3px);
+            background: var(--gold);
+            color: #000;
+            box-shadow: 0 0 30px var(--gold-glow);
+        }
+
+        .lifeline-btn:disabled {
+            border-color: #444;
+            color: #444;
+            cursor: not-allowed;
+            position: relative;
+            box-shadow: none;
+            background: #080a14;
+        }
+
+        .lifeline-btn:disabled::after {
+            content: '❌';
+            position: absolute;
+            font-size: 1.6rem;
+        }
+
+        /* Host Screen */
+        .host-box {
+            background: var(--panel-bg);
+            border: 2px solid var(--blue-glow);
+            border-radius: 15px;
+            padding: 15px 20px;
+            text-align: center;
+            box-shadow: 0 0 25px rgba(0, 210, 255, 0.25);
+            backdrop-filter: blur(8px);
+        }
+
+        .host-text {
+            font-size: 1.15rem;
+            color: #d1f0ff;
+            font-style: italic;
+            transition: all 0.3s;
+        }
+
+        /* Question Box */
+        .question-card {
+            background: linear-gradient(180deg, #101c4d 0%, #080d2a 100%);
+            border: 3px solid var(--gold);
+            border-radius: 20px;
+            padding: 25px;
+            text-align: center;
+            font-size: 1.3rem;
+            font-weight: 600;
+            min-height: 110px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 0 35px rgba(255, 215, 0, 0.3), inset 0 0 15px rgba(0,0,0,0.8);
+            position: relative;
+        }
+
+        /* Answer Options Grid */
+        .options-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+
+        .option-btn {
+            background: linear-gradient(180deg, #0f193d 0%, #05081c 100%);
+            border: 2px solid var(--blue-glow);
+            border-radius: 35px;
+            padding: 16px 22px;
+            color: var(--text-white);
+            font-size: 1.05rem;
+            font-weight: 600;
+            text-align: left;
+            cursor: pointer;
+            transition: all 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            display: flex;
+            align-items: center;
+            box-shadow: 0 0 12px rgba(0, 210, 255, 0.15);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .option-btn:hover:not(:disabled) {
+            border-color: var(--gold);
+            background: linear-gradient(180deg, #1c2b66 0%, #0a1033 100%);
+            box-shadow: 0 0 25px var(--gold-glow);
+            transform: scale(1.02);
+        }
+
+        .option-prefix {
+            color: var(--gold);
+            margin-right: 12px;
+            font-weight: bold;
+            font-size: 1.1rem;
+        }
+
+        .option-btn.selected {
+            background: linear-gradient(180deg, #b36b00 0%, #663d00 100%) !important;
+            border-color: var(--orange) !important;
+            animation: pulseOrange 0.6s infinite alternate;
+        }
+
+        .option-btn.correct {
+            background: linear-gradient(180deg, #008037 0%, #004d21 100%) !important;
+            border-color: var(--correct-green) !important;
+            box-shadow: 0 0 35px var(--correct-green) !important;
+            color: #fff;
+            animation: flashGreen 0.4s infinite alternate;
+        }
+
+        .option-btn.wrong {
+            background: linear-gradient(180deg, #990011 0%, #4d0008 100%) !important;
+            border-color: var(--wrong-red) !important;
+            box-shadow: 0 0 35px var(--wrong-red) !important;
+            animation: shake 0.3s;
+        }
+
+        .option-btn.hidden {
+            visibility: hidden;
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        /* Money Ladder Area */
+        .ladder-area {
+            flex: 1;
+            background: var(--panel-bg);
+            border: 2px solid var(--blue-glow);
+            border-radius: 15px;
+            padding: 15px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            min-width: 230px;
+            box-shadow: 0 0 20px rgba(0,210,255,0.2);
+            backdrop-filter: blur(8px);
+        }
+
+        .ladder-title {
+            text-align: center;
+            font-size: 1rem;
+            color: var(--blue-glow);
+            margin-bottom: 10px;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            font-weight: bold;
+        }
+
+        .ladder-list {
+            list-style: none;
+            display: flex;
+            flex-direction: column-reverse;
+            gap: 4px;
+        }
+
+        .ladder-step {
+            display: flex;
+            justify-content: space-between;
+            padding: 5px 12px;
+            border-radius: 6px;
+            font-size: 0.9rem;
+            font-weight: bold;
+            color: var(--orange);
+            transition: all 0.3s ease;
+        }
+
+        .ladder-step.milestone {
+            color: var(--text-white);
+        }
+
+        .ladder-step.active {
+            background: var(--gold);
+            color: #000 !important;
+            box-shadow: 0 0 20px var(--gold-glow);
+            font-weight: 900;
+            transform: scale(1.05);
+        }
+
+        .ladder-step.passed {
+            color: var(--correct-green);
+        }
+
+        /* Modal Overlay */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: rgba(0,0,0,0.88);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+        }
+
+        .modal-overlay.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .modal-card {
+            background: linear-gradient(180deg, #151c48, #07091f);
+            border: 3px solid var(--gold);
+            border-radius: 20px;
+            padding: 35px;
+            max-width: 520px;
+            width: 90%;
+            text-align: center;
+            box-shadow: 0 0 40px var(--gold-glow);
+            transform: scale(0.8);
+            transition: transform 0.3s ease;
+        }
+
+        .modal-overlay.active .modal-card {
+            transform: scale(1);
+        }
+
+        .modal-title {
+            color: var(--gold);
+            font-size: 1.6rem;
+            margin-bottom: 15px;
+            text-shadow: 0 0 10px var(--gold-glow);
+        }
+
+        .modal-body {
+            font-size: 1.15rem;
+            margin-bottom: 25px;
+            line-height: 1.6;
+        }
+
+        .close-btn {
+            background: var(--gold);
+            color: #000;
+            border: none;
+            padding: 12px 30px;
+            font-weight: bold;
+            font-size: 1.05rem;
+            border-radius: 25px;
+            cursor: pointer;
+            box-shadow: 0 0 15px var(--gold-glow);
+            transition: transform 0.2s;
+        }
+
+        .close-btn:hover {
+            transform: scale(1.08);
+        }
+
+        /* Keyframe Animations */
+        @keyframes pulseOrange {
+            0% { box-shadow: 0 0 10px var(--orange); }
+            100% { box-shadow: 0 0 30px var(--orange); }
+        }
+
+        @keyframes flashGreen {
+            0% { opacity: 0.8; }
+            100% { opacity: 1; }
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            20%, 60% { transform: translateX(-10px); }
+            40%, 80% { transform: translateX(10px); }
+        }
+
+        @media (max-width: 850px) {
+            .main-stage { flex-direction: column; }
+            .options-grid { grid-template-columns: 1fr; }
+            .ladder-area { min-width: 100%; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Background Studio Spotlights -->
+    <div class="studio-lights">
+        <div class="spotlight left"></div>
+        <div class="spotlight right"></div>
+    </div>
+
+    <header>
+        <h1>Who Wants to Be a Millionaire</h1>
+        <p style="color: var(--blue-glow); font-size: 0.95rem; letter-spacing: 1px;">HBI Sonship Final Exam Showdown</p>
+    </header>
+
+    <div class="main-stage">
+        <!-- Left Section: Gameplay Stage -->
+        <div class="game-area">
+            
+            <div class="lifelines">
+                <button class="lifeline-btn" id="life5050" onclick="use5050()">50:50</button>
+                <button class="lifeline-btn" id="lifeAudience" onclick="useAudience()">Audience</button>
+                <button class="lifeline-btn" id="lifePhone" onclick="usePhone()">Phone</button>
+            </div>
+
+            <div class="host-box">
+                <div class="host-text" id="hostDialogue">"Welcome to the Hot Seat! 15 questions stand between you and $1,000,000!"</div>
+            </div>
+
+            <div class="question-card" id="questionText">
+                Loading Question...
+            </div>
+
+            <div class="options-grid" id="optionsGrid">
+                <button class="option-btn" onclick="selectAnswer(0)"><span class="option-prefix">A:</span> <span class="option-text"></span></button>
+                <button class="option-btn" onclick="selectAnswer(1)"><span class="option-prefix">B:</span> <span class="option-text"></span></button>
+                <button class="option-btn" onclick="selectAnswer(2)"><span class="option-prefix">C:</span> <span class="option-text"></span></button>
+                <button class="option-btn" onclick="selectAnswer(3)"><span class="option-prefix">D:</span> <span class="option-text"></span></button>
+            </div>
+
+        </div>
+
+        <!-- Right Section: Prize Money Ladder -->
+        <div class="ladder-area">
+            <div class="ladder-title">Prize Ladder</div>
+            <ul class="ladder-list" id="ladderList">
+                <!-- Populated dynamically -->
+            </ul>
+        </div>
+    </div>
+
+    <!-- Modal Pop-Up Screen -->
+    <div class="modal-overlay" id="gameModal">
+        <div class="modal-card">
+            <div class="modal-title" id="modalTitle">Lifeline</div>
+            <div class="modal-body" id="modalBody">Modal content goes here.</div>
+            <button class="close-btn" id="modalBtn" onclick="closeModal()">Continue</button>
+        </div>
+    </div>
+
+    <script>
+        // Web Audio Synthesizer for Rich Retro Sounds
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+        function playSound(type) {
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+
+            const now = audioCtx.currentTime;
+
+            if (type === 'select') {
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(261.63, now); // C4
+                osc.frequency.exponentialRampToValueAtTime(523.25, now + 0.18); // C5
+                gain.gain.setValueAtTime(0.25, now);
+                gain.gain.linearRampToValueAtTime(0.01, now + 0.18);
+                osc.start(now);
+                osc.stop(now + 0.18);
+            } else if (type === 'correct') {
+                osc.type = 'triangle';
+                osc.frequency.setValueAtTime(523.25, now); // C5
+                osc.frequency.setValueAtTime(659.25, now + 0.12); // E5
+                osc.frequency.setValueAtTime(783.99, now + 0.24); // G5
+                osc.frequency.setValueAtTime(1046.50, now + 0.36); // C6
+                gain.gain.setValueAtTime(0.35, now);
+                gain.gain.linearRampToValueAtTime(0.01, now + 0.7);
+                osc.start(now);
+                osc.stop(now + 0.7);
+            } else if (type === 'wrong') {
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(220, now);
+                osc.frequency.setValueAtTime(110, now + 0.25);
+                gain.gain.setValueAtTime(0.4, now);
+                gain.gain.linearRampToValueAtTime(0.01, now + 0.6);
+                osc.start(now);
+                osc.stop(now + 0.6);
+            } else if (type === 'lifeline') {
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(350, now);
+                osc.frequency.exponentialRampToValueAtTime(700, now + 0.3);
+                gain.gain.setValueAtTime(0.25, now);
+                gain.gain.linearRampToValueAtTime(0.01, now + 0.3);
+                osc.start(now);
+                osc.stop(now + 0.3);
+            }
+        }
+
+        // Prize Money Ladder
+        const moneyLadder = [
+            "$100", "$200", "$300", "$500", "$1,000",
+            "$2,000", "$4,000", "$8,000", "$16,000", "$32,000",
+            "$64,000", "$125,000", "$250,000", "$500,000", "$1,000,000"
+        ];
+        const milestones = [4, 9, 14]; // $1,000, $32,000, $1,000,000 Guaranteed
+
+        // HBI Study Guide Questions
+        const questions = [
+            {
+                q: "1. The Father never wanted religious people, He wanted what?",
+                options: ["Servants", "Sons", "Followers", "Disciples"],
+                correct: 1
+            },
+            {
+                q: "2. Which of the following is NOT one of the 6 points of sonship?",
+                options: ["Sons THINK like the father", "Sons have the father's authority", "Sons earn their inheritance", "Sons speak like the father"],
+                correct: 2
+            },
+            {
+                q: "3. What is one of the two major damaging mentalities circulating in the church right now?",
+                options: ["'I'm only human' mentality", "'Faith moves mountains' mentality", "'I am a son' mentality", "'Overcomer' mentality"],
+                correct: 0
+            },
+            {
+                q: "4. What is the sustaining statement of sonship?",
+                options: ["Sonship is earned through good deeds", "What goes for one son, goes for all sons", "Only Jesus has complete authority", "We are all distinct in nature"],
+                correct: 1
+            },
+            {
+                q: "5. According to the study guide, what quality do Jesus and all His sons share?",
+                options: ["Same earthly origin", "Same physical body", "Same Seat of Authority", "Same past experiences"],
+                correct: 2
+            },
+            {
+                q: "6. Finish the statement: 'I must expect the Father to deal with me...'",
+                options: ["According to my mistakes", "As He deals with Jesus", "Based on my repentance", "With strict severity"],
+                correct: 1
+            },
+            {
+                q: "7. Everything we do as sons comes directly from which foundation?",
+                options: ["Identifying with Christ", "Memorizing Scripture", "Church Attendance", "Doing Good Works"],
+                correct: 0
+            },
+            {
+                q: "8. Complete the key principle: 'Having the right ______ produces the right image.'",
+                options: ["Behavior", "Focus", "Attitude", "Theology"],
+                correct: 1
+            },
+            {
+                q: "9. Where should our attention constantly be fixed?",
+                options: ["Our daily problems", "Realities of Heaven", "Past mistakes", "Opinions of others"],
+                correct: 1
+            },
+            {
+                q: "10. To identify with Christ means to identify with His Death, His Burial, and His what?",
+                options: ["Miracles", "Resurrection", "Teachings", "Ascension"],
+                correct: 1
+            },
+            {
+                q: "11. What has man been given in order to manifest heavenly realities?",
+                options: ["Eternal Life", "Human Willpower", "Financial Wealth", "Physical Strength"],
+                correct: 0
+            },
+            {
+                q: "12. What is the Greek word for 'Life' defined as 'divine nature / DNA'?",
+                options: ["Bios", "Psyche", "Zoe", "Logos"],
+                correct: 2
+            },
+            {
+                q: "13. Which of these is explicitly included in the nature of God according to the guide?",
+                options: ["Wisdom, Ability, Character, Strength", "Wealth, Fame, Status, Glory", "Judgment, Wrath, Fear, Power", "Logic, Science, Reason, Intellect"],
+                correct: 0
+            },
+            {
+                q: "14. How is FAITH defined as it relates to the believer?",
+                options: ["Hoping for things you cannot see", "Being conscious of your covenant/identity with no respect to senses", "Believing without any doubt or emotion", "Praying until you receive an answer"],
+                correct: 1
+            },
+            {
+                q: "15. What is defined as the result of losing consciousness of one's covenant/identity by giving esteem to senses?",
+                options: ["Sin", "Unbelief", "Weakness", "Ignorance"],
+                correct: 1
+            }
+        ];
+
+        let currentQIndex = 0;
+        let selectedOption = null;
+        let isLocked = false;
+
+        function initGame() {
+            renderLadder();
+            loadQuestion();
+        }
+
+        function renderLadder() {
+            const list = document.getElementById('ladderList');
+            list.innerHTML = '';
+            moneyLadder.forEach((amount, index) => {
+                const li = document.createElement('li');
+                li.className = 'ladder-step';
+                if (milestones.includes(index)) li.classList.add('milestone');
+                if (index === currentQIndex) li.classList.add('active');
+                if (index < currentQIndex) li.classList.add('passed');
+
+                li.innerHTML = `<span>${index + 1}</span> <span>${amount}</span>`;
+                list.appendChild(li);
+            });
+        }
+
+        function loadQuestion() {
+            isLocked = false;
+            selectedOption = null;
+            const q = questions[currentQIndex];
+
+            document.getElementById('questionText').innerText = q.q;
+            document.getElementById('hostDialogue').innerText = `"For ${moneyLadder[currentQIndex]}: Take a deep breath and select your answer."`;
+
+            const buttons = document.querySelectorAll('.option-btn');
+            buttons.forEach((btn, index) => {
+                btn.className = 'option-btn';
+                btn.disabled = false;
+                const textSpan = btn.querySelector('.option-text');
+                textSpan.innerText = q.options[index];
+            });
+
+            renderLadder();
+        }
+
+        function selectAnswer(index) {
+            if (isLocked) return;
+            isLocked = true;
+            selectedOption = index;
+
+            playSound('select');
+            const buttons = document.querySelectorAll('.option-btn');
+            buttons[index].classList.add('selected');
+
+            document.getElementById('hostDialogue').innerText = `"Is that your final answer?"`;
+
+            setTimeout(() => {
+                checkAnswer(index);
+            }, 2000);
+        }
+
+        function checkAnswer(index) {
+            const q = questions[currentQIndex];
+            const buttons = document.querySelectorAll('.option-btn');
+
+            if (index === q.correct) {
+                playSound('correct');
+                buttons[index].classList.remove('selected');
+                buttons[index].classList.add('correct');
+                document.getElementById('hostDialogue').innerText = `"BOOM! You got it right! You've secured ${moneyLadder[currentQIndex]}!"`;
+
+                setTimeout(() => {
+                    currentQIndex++;
+                    if (currentQIndex < questions.length) {
+                        loadQuestion();
+                    } else {
+                        showModal("🎉 GRAND CHAMPION! 🎉", "CONGRATULATIONS! You answered all 15 questions correctly and mastered the HBI Study Guide! You are officially a $1,000,000 Winner!");
+                    }
+                }, 2200);
+            } else {
+                playSound('wrong');
+                buttons[index].classList.remove('selected');
+                buttons[index].classList.add('wrong');
+                buttons[q.correct].classList.add('correct');
+                document.getElementById('hostDialogue').innerText = `"Ah, tough luck! That wasn't the correct answer."`;
+
+                let guaranteed = "$0";
+                if (currentQIndex >= 9) guaranteed = "$32,000";
+                else if (currentQIndex >= 4) guaranteed = "$1,000";
+
+                setTimeout(() => {
+                    showModal("GAME OVER", `You walked away with <strong>${guaranteed}</strong>. Great effort! Review your study guide notes and hit the hot seat again!`);
+                }, 2200);
+            }
+        }
+
+        /* Lifeline Controls */
+        function use5050() {
+            if (isLocked) return;
+            playSound('lifeline');
+            document.getElementById('life5050').disabled = true;
+
+            const q = questions[currentQIndex];
+            let removed = 0;
+            const buttons = document.querySelectorAll('.option-btn');
+
+            while (removed < 2) {
+                let rand = Math.floor(Math.random() * 4);
+                if (rand !== q.correct && !buttons[rand].classList.contains('hidden')) {
+                    buttons[rand].classList.add('hidden');
+                    removed++;
+                }
+            }
+            document.getElementById('hostDialogue').innerText = `"50:50 Lifeline activated! Two wrong choices vanished!"`;
+        }
+
+        function useAudience() {
+            if (isLocked) return;
+            playSound('lifeline');
+            document.getElementById('lifeAudience').disabled = true;
+
+            const q = questions[currentQIndex];
+            let percentages = [0, 0, 0, 0];
+            
+            percentages[q.correct] = Math.floor(Math.random() * 30) + 55; // 55% - 85%
+            let remaining = 100 - percentages[q.correct];
+
+            for (let i = 0; i < 4; i++) {
+                if (i !== q.correct) {
+                    let share = Math.floor(Math.random() * remaining);
+                    percentages[i] = share;
+                    remaining -= share;
+                }
+            }
+            percentages[3] += remaining;
+
+            let resultText = `<strong>Studio Audience Vote:</strong><br><br>`;
+            const labels = ['A', 'B', 'C', 'D'];
+            for (let i = 0; i < 4; i++) {
+                resultText += `<strong>${labels[i]}:</strong> ${percentages[i]}%<br>`;
+            }
+
+            showModal("Ask The Audience", resultText);
+        }
+
+        function usePhone() {
+            if (isLocked) return;
+            playSound('lifeline');
+            document.getElementById('lifePhone').disabled = true;
+
+            const q = questions[currentQIndex];
+            const labels = ['A', 'B', 'C', 'D'];
+            const correctLabel = labels[q.correct];
+
+            const quotes = [
+                `"I studied this unit inside out! The correct answer is definitely <strong>${correctLabel}</strong>!"`,
+                `"I'm 100% confident it's <strong>${correctLabel}</strong>. Lock it in!"`,
+                `"Pretty sure it's <strong>${correctLabel}</strong> based on my study guide notes!"`
+            ];
+
+            const randomQuote = quotes[Math.floor(Math.random() * quotes.length)];
+            showModal("Phone-a-Friend", `📞 <em>Your friend says:</em><br><br>${randomQuote}`);
+        }
+
+        /* Modal Screen Handler */
+        function showModal(title, body) {
+            document.getElementById('modalTitle').innerHTML = title;
+            document.getElementById('modalBody').innerHTML = body;
+            document.getElementById('gameModal').classList.add('active');
+        }
+
+        function closeModal() {
+            document.getElementById('gameModal').classList.remove('active');
+            if (currentQIndex >= questions.length || document.getElementById('hostDialogue').innerText.includes("tough luck")) {
+                currentQIndex = 0;
+                document.getElementById('life5050').disabled = false;
+                document.getElementById('lifeAudience').disabled = false;
+                document.getElementById('lifePhone').disabled = false;
+                loadQuestion();
+            }
+        }
+
+        // Initialize Stage
+        initGame();
+    </script>
+</body>
+</html>
